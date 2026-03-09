@@ -1,26 +1,28 @@
 FROM python:3.10-slim
 
+# Set environment variables
 WORKDIR /app
+
+# Environment variables for Django settings
+ENV API_PORT=8000
 
 # Install dependencies
 COPY requirements.txt .
-
-# Install dependencies without cache
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of the application code
+# Copy the application code
 COPY . .
 
-# Create a non-root user,set ownership of the app directory and switch to that user
-RUN useradd -m backend-user
-RUN chown -R backend-user:backend-user /app
-USER backend-user
+# Create a non-root user and set permissions
+RUN useradd -m backend-user \
+    && chmod +x entrypoint.sh \
+    && chown -R backend-user:backend-user /app
 
-# PORT for the API
-ENV API_PORT=8000
+# Switch to the non-root user
+USER backend-user
 
 # Expose the port the app runs on
 EXPOSE 8000
 
 # Run the application
-CMD [ "sh", "-c" , "python manage.py runserver 0.0.0.0:$API_PORT" ]
+CMD ["sh", "-c", "./entrypoint.sh"]
